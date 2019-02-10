@@ -1,0 +1,6 @@
+**/.idea/
+/PythonCV
+**.pyc
+*.asv
+**/venv*
+**/html
