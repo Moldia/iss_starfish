@@ -10,27 +10,27 @@ from starfish.experiment.builder import write_experiment_json
 
 # imaging
 channels = ["DAPI", "AF488", "Cy3", "Cy5", "AF750", "Atto425"]
-pixelscale = 0.1625
 
 # codebook in csv (column 1: code, column2-x: color code in each round)
 # AVOID comma in gene names (column 1)
-codebook_csv = r"D:\HCA_07_DG\human_codebook.csv"
+codebook_csv = r"D:\HCA_07_DG\mouse_codebook.csv"
 DO_decorators = ["Atto425" "AF488" "Cy3" "Cy5"]
 
-# tile position
-# TODO: read czi metadata using bio-format
-tilepos_xy_csv = r"D:\HCA_07_DG\human_tile_coordinates.csv"
+# tile position and metadata
+# TODO: read metadata using bio-format
+pixelscale = 0.1625
+tilepos_xy_csv = r"D:\HCA_07_DG\mouse_tile_coordinates.csv"
 
 # not sure why this is so important and can't be read from image itself...
 tilesz = 2048
 SHAPE = tilesz, tilesz
 
 # file location
-input_dir = r"D:\HCA_07_DG\human_test_1FOV\2D"
-output_dir = r"D:\HCA_07_DG\starfish_190208\2D"
+input_dir = r"D:\HCA_07_DG\mouse_test_1FOV\2D"
+output_dir = r"D:\HCA_07_DG\starfish_190208\mouse\2D"
 
 
-# vamos
+# hakuna matata
 if not os.path.isdir(output_dir):
     try:
         os.mkdir(output_dir)
@@ -38,6 +38,11 @@ if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
 
 # TODO: register, re-slice and format images
+
+
+def add_codebook(experiment_json_doc):
+    experiment_json_doc['codebook'] = "codebook.json"
+    return experiment_json_doc
 
 
 def make_codebook_json(codebook_csv):
@@ -57,12 +62,6 @@ def make_codebook_json(codebook_csv):
     codebook.to_json(os.path.join(output_dir, codebook_json_filename))
 
 
-def add_codebook(experiment_json_doc):
-    experiment_json_doc['codebook'] = "codebook.json"
-
-    return experiment_json_doc
-
-
 def get_tilepos(tilepos_xy_csv):
     tilexy = np.ndarray((0,2))
     with open(tilepos_xy_csv, 'r') as f:
@@ -72,6 +71,7 @@ def get_tilepos(tilepos_xy_csv):
     return tilexy
 
 
+# TODO: skip reading and writing of images
 class ISSTile2D(FetchedTile):
     def __init__(self, file_path, fov):
         self.file_path = file_path
@@ -83,11 +83,10 @@ class ISSTile2D(FetchedTile):
 
     @property
     def coordinates(self) -> Mapping[Union[str, Coordinates], Union[Number, Tuple[Number, Number]]]:
-        # FIXME: (dganguli) please provide proper coordinates here.
         return {
             Coordinates.X: (tilexy[self.fov, 0]*pixelscale, (tilexy[self.fov, 0] + tilesz)*pixelscale),
             Coordinates.Y: (tilexy[self.fov, 1]*pixelscale, (tilexy[self.fov, 1] + tilesz)*pixelscale),
-            Coordinates.Z: (0.0, 0.0001),
+            Coordinates.Z: (0.0, 0.0),
         }
 
     def tile_data(self) -> np.ndarray:
@@ -95,24 +94,23 @@ class ISSTile2D(FetchedTile):
 
 
 class ISS2DPrimaryTileFetcher(TileFetcher):
-    def __init__(self, input_dir):
-        self.input_dir = input_dir
-
-    def get_tile(self, fov: int, r: int, ch: int, z: int) -> FetchedTile:
-        # return ISSTile2D(os.path.join(self.input_dir, "r{}_c{}_t{}.tif".format(r+1, ch+1, fov+1)), fov)
-        return ISSTile2D(os.path.join(self.input_dir, "r{}_c{}_t{}.tif".format(r+1, ch+1, 340+1)), 340)
-
-
-class ISS2DAuxTileFetcher(TileFetcher):
     def __init__(self, path):
         self.path = path
 
     def get_tile(self, fov: int, r: int, ch: int, z: int) -> FetchedTile:
-        return ISSTile2D(self.path, 340)
+        return ISSTile2D(os.path.join(self.path, "r{}_c{}_t{}.tif".format(r+1, ch+1, 340+1)), 340)
+
+
+class ISS2DAuxTileFetcher(TileFetcher):
+    def __init__(self, path, filename_prefix):
+        self.path = path
+        self.prefix = filename_prefix
+
+    def get_tile(self, fov: int, r: int, ch: int, z: int) -> FetchedTile:
+        return ISSTile2D(os.path.join(self.path, self.prefix + "{}.tif".format(340+1)), 340)
 
 
 tilexy = get_tilepos(tilepos_xy_csv)
-make_codebook_json(codebook_csv)
 
 
 write_experiment_json(
@@ -136,8 +134,11 @@ write_experiment_json(
     },
     primary_tile_fetcher=ISS2DPrimaryTileFetcher(input_dir),
     aux_tile_fetcher={
-        'nuclei': ISS2DAuxTileFetcher(os.path.join(input_dir, "r1_c0_t341.tif")),
+        'nuclei': ISS2DAuxTileFetcher(input_dir, "r1_c0_t"),
     },
     postprocess_func=add_codebook,
     default_shape=SHAPE
 )
+
+make_codebook_json(codebook_csv)
+

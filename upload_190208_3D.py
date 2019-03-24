@@ -10,25 +10,25 @@ from starfish.experiment.builder import write_experiment_json
 
 # imaging
 channels = ["DAPI", "AF488", "Cy3", "Cy5", "AF750", "Atto425"]
-pixelscale = 0.1625
-zstep = 0.41
 
 # codebook in csv (column 1: code, column2-x: color code in each round)
 # AVOID comma in gene names (column 1)
-codebook_csv = r"D:\HCA_07_DG\human_codebook.csv"
+codebook_csv = r"D:\HCA_07_DG\mouse_codebook.csv"
 DO_decorators = ["Atto425" "AF488" "Cy3" "Cy5"]
 
-# tile position
+# tile position and metadata
 # TODO: read czi metadata using bio-format
-tilepos_xy_csv = r"D:\HCA_07_DG\human_tile_coordinates.csv"
+pixelscale = 0.1625
+zstep = 0.41
+tilepos_xy_csv = r"D:\HCA_07_DG\mouse_tile_coordinates.csv"
 
 # not sure why this is so important and can't be read from image itself...
 tilesz = 2048
 SHAPE = tilesz, tilesz
 
 # file tiff location
-input_dir = r"D:\HCA_07_DG\human_test_1FOV\3D"
-output_dir = r"D:\HCA_07_DG\starfish_190208\3D"
+input_dir = r"D:\HCA_07_DG\mouse_test_1FOV\3D"
+output_dir = r"D:\HCA_07_DG\starfish_190208\mouse\3D"
 
 
 # hakuna matata
@@ -73,6 +73,7 @@ def get_tilepos(tilepos_xy_csv):
     return tilexy
 
 
+# TODO: skip reading and writing of images
 class ISSTile3D(FetchedTile):
     def __init__(self, file_path, fov, z):
         self.file_path = file_path
@@ -97,24 +98,23 @@ class ISSTile3D(FetchedTile):
 
 
 class ISS3DPrimaryTileFetcher(TileFetcher):
-    def __init__(self, input_dir):
-        self.input_dir = input_dir
-
-    def get_tile(self, fov: int, r: int, ch: int, z: int) -> FetchedTile:
-        # return ISSTile3D(os.path.join(self.input_dir, "r{}_c{}_z{}_t{}.tif".format(r+1, ch+1, z+1, fov+1)), fov, z)
-        return ISSTile3D(os.path.join(self.input_dir, "r{}_c{}_z{}_t{}.tif".format(r+1, ch+1, z+1, 340+1)), 340, z)
-
-
-class ISS3DAuxTileFetcher(TileFetcher):
     def __init__(self, path):
         self.path = path
 
     def get_tile(self, fov: int, r: int, ch: int, z: int) -> FetchedTile:
-        return ISSTile3D(os.path.join(self.path, "r{}_c0_z{}_t{}.tif".format(r+1, z+1, 340+1)), 340, z)
+        return ISSTile3D(os.path.join(self.path, "r{}_c{}_z{}_t{}.tif".format(r+1, ch+1, z+1, 19+1)), 19, z)
+
+
+class ISS3DAuxTileFetcher(TileFetcher):
+    def __init__(self, path, filename_prefix):
+        self.path = path
+        self.prefix = filename_prefix
+
+    def get_tile(self, fov: int, r: int, ch: int, z: int) -> FetchedTile:
+        return ISSTile3D(os.path.join(self.path, self.prefix + "z{}_t{}.tif".format(z+1, 19+1)), 19, z)
 
 
 tilexy = get_tilepos(tilepos_xy_csv)
-make_codebook_json(codebook_csv)
 
 
 write_experiment_json(
@@ -138,8 +138,12 @@ write_experiment_json(
     },
     primary_tile_fetcher=ISS3DPrimaryTileFetcher(input_dir),
     aux_tile_fetcher={
-        'nuclei': ISS3DAuxTileFetcher(input_dir),
+        'nuclei': ISS3DAuxTileFetcher(input_dir, "r1_c0_"),
     },
     postprocess_func=add_codebook,
     default_shape=SHAPE
 )
+
+
+make_codebook_json(codebook_csv)
+
