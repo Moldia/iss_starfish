@@ -10,30 +10,30 @@ from starfish.experiment.builder import write_experiment_json
 
 # imaging
 channels = ["DAPI", "Cy3", "Cy5", "AF750", "AF488"]
-FILENAME = ["HCA_09_hm_120_c1_stitched",
-            "HCA_09_hm_120_c2_stitched",
-            "HCA_09_hm_120_c3_stitched",
-            "HCA_09_hm_120_c4_stitched",
-            "HCA_09_hm_120_c5_stitched"]
+FILENAME = ["HCA_09_ms_120_c1_stitched",
+            "HCA_09_ms_120_c2_stitched",
+            "HCA_09_ms_120_c3_stitched",
+            "HCA_09_ms_120_c4_stitched",
+            "HCA_09_ms_120_c5_stitched"]
 
 # codebook in csv (column 1: code, column2-x: color code in each round)
 # AVOID comma in gene names (column 1)
-codebook_csv = r"E:\HCA_09b_human_120genes\starfish_codebook_human120.csv"
+codebook_csv = r"E:\HCA_09b_mouse_120genes\codebook_starfish_mouse120.csv"
 DO_decorators = ["AF750", "AF488", "Cy3", "Cy5"]
 CHORDER = [channels.index(i) for i in DO_decorators]
 
 # tile position and metadata
 # TODO: read metadata using bio-format
 pixelscale = 0.1625
-tilepos_xy_csv = r"E:\HCA_09b_human_120genes\Preprocessing\ReslicedTiles\tilepos.csv"
+tilepos_xy_csv = r"E:\HCA_09b_mouse_120genes\Preprocessing\ReslicedTiles\tilepos.csv"
 
 # not sure why this is so important and can't be read from image itself...
 tilesz = 2000
 SHAPE = tilesz, tilesz
 
 # file location
-input_dir = r"E:\HCA_09b_human_120genes\Preprocessing\ReslicedTiles"
-output_dir = r"E:\HCA_09b_human_120genes\upload_starfish_190415\ISS_h_brain_03"
+input_dir = r"E:\HCA_09b_mouse_120genes\Preprocessing\ReslicedTiles"
+output_dir = r"E:\HCA_09b_mouse_120genes\upload_starfish_190415\ISS_m_brain_03"
 
 
 # hakuna matata
@@ -118,7 +118,7 @@ tilexy = get_tilepos(tilepos_xy_csv)
 
 
 write_experiment_json(
-    path=output_dir, fov_count=460, tile_format=ImageFormat.TIFF,
+    path=output_dir, fov_count=704, tile_format=ImageFormat.TIFF,
     primary_image_dimensions={
         Axes.ROUND: 5,
         Axes.CH: 4,

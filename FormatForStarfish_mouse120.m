@@ -12,24 +12,25 @@ tile_align_channel = 1; % for registration between rounds
 tile_stitch_channel = 3; %Cy3   % for registration between tiles
 
 % extract tile images from Zeiss files
-% [~, nFiles] = get_2d_tiles(image_directory, image_files, output_directory);
+[~, nFiles] = get_2d_tiles(image_directory, image_files, output_directory);
 
 % align between rounds (assuming position offset is relatively small)
-% align_2d_tiles(fullfile(output_directory, '2DTiles'), image_files, output_directory, nChannels, 645, reference_round, tile_align_channel);
+align_2d_tiles(fullfile(output_directory, '2DTiles'), image_files, output_directory, nChannels, max(nFiles), reference_round, tile_align_channel);
 
 % stitch into big images either individually for every round or compute
 % from a fixed round (need tile transformation info from align_2d_tiles)
-% stitch_2d_mist(fullfile(output_directory, '2DTiles'), image_files, output_directory, nChannels, tile_stitch_channel, reference_round);
+stitch_2d_mist(fullfile(output_directory, '2DTiles'), image_files, output_directory, nChannels, tile_stitch_channel, reference_round);
 
 % reslice into non-overlapping small tiles
-% nTiles = tile_stitched_images(fullfile(output_directory, 'Stitched2DTiles_MIST_Ref1'), image_files, output_directory, 2000);
+nTiles = tile_stitched_images(fullfile(output_directory, 'Stitched2DTiles_MIST_Ref1'), image_files, output_directory, 2000);
 
 % pick random 10 tiles to visually inspect (will pause until the figure
 % window is closed)
-% inspect_images(fullfile(output_directory, 'ReslicedTiles'), image_files, 704, 2:5)
+inspect_images(fullfile(output_directory, 'ReslicedTiles'), image_files, nTiles, 2:5)
 
 % preliminary base calling
-Results = test_analysis(fullfile(output_directory, 'ReslicedTiles'), image_files, output_directory, 704, [4 5 2 3], 'taglist_mouse120.csv');
+% DO-1:4 corresponding to channel 4,5,2,3
+Results = test_analysis(fullfile(output_directory, 'ReslicedTiles'), image_files, output_directory, nTiles, [4 5 2 3], 'taglist_mouse120.csv');
 
 %% get MIPs or make EDFs from z stacks
 function [outdir, nFiles] = get_2d_tiles(indir, files, outdir)
