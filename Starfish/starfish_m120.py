@@ -3,7 +3,7 @@ import starfish
 from starfish.types import Axes
 
 
-experiment_str = 'file:///E:/HCA/HCA_09b_mouse_120genes/upload_starfish_190415/ISS_m_brain_03/main_files/experiment.json'
+experiment_str = 'file:///E:/HCA/HCA_09b_mouse_120genes/STARFISH/smallTiles2/experiment.json'
 experiment = starfish.Experiment.from_json(experiment_str)
 
 
@@ -61,6 +61,6 @@ def process_fov(field_num: int, experiment_str: str):
     df = decoded.to_decoded_spots()
     return df
 
-test = process_fov(100, experiment_str)
+test = process_fov(1, experiment_str)
 
 
